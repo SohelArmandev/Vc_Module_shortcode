@@ -1,0 +1,191 @@
+===========================================
+Vc_Map
+===========================================
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly
+}
+
+
+//stock Team
+vc_map( 
+    array(
+        "name" => __( "Main Slide", "stock" ),
+        "base" => "main_slide",
+        "category" => __( "stock", "stock"),
+        "icon"  => stock_ACC_URL.'/assets/img/iconic-box.png',
+        "params" => array(
+             array(
+				  "type" => "textfield",
+				  "heading" => esc_html__( "Slide items", "stock" ),
+				  "param_name" => "slideitems",
+				  "value" => __( "1", "stock" ),
+				  "description" => esc_html__( "Please Type How Many Slide Do You Want To show. Use -1 For Unlimited Slides", "stock" )
+				 ),
+             array(
+				  "type" => "dropdown",
+				  "heading" => esc_html__( "Eneable Or Deseable Loop", "stock" ),
+				  "param_name" => "slideloop",
+				  "std" => __( "true", "stock" ),
+				  "value" =>array(
+					  "yes" => "true",
+					  "No" => "false",
+				   ),
+				  "description" => __( "Enable Or Deseable Loop", "stock" )
+				 ),
+			 array(
+				  "type" => "dropdown",
+				  "heading" => esc_html__( "Eneable Or Deseable AutoPlay", "stock" ),
+				  "param_name" => "slideautoplay",
+				  "std" => __( "true", "stock" ),
+				  "value" =>array(
+					  "yes" => "true",
+					  "No" => "false",
+				   ),
+				  "description" => __( "Enable Or Deseable AutoPlay", "stock" )
+				 ),
+			 array(
+				  "type" => "dropdown",
+				  "heading" => esc_html__( "Slide Speed", "stock" ),
+				  "param_name" => "slidespeed",
+				  "std" => __( "500", "stock" ),
+				  "value" =>array(
+					  ".5s" => "500",
+					  "1s" => "1000",
+					  "2s" => "2000",
+					  "3s" => "3000",
+					  "4s" => "4000",
+					  "5s" => "5000",
+					  "6s" => "6000",
+					  "7s" => "7000",
+				   ),
+				  "description" => __( "Set The Speed Of The Slide", "stock" )
+				 ),
+			  array(
+				  "type" => "dropdown",
+				  "heading" => esc_html__( "Eneable Or Deseable Nav", "stock" ),
+				  "param_name" => "slidenave",
+				  "std" => __( "true", "stock" ),
+				  "value" =>array(
+					  "yes" => "true",
+					  "No" => "false",
+				   ),
+				  "description" => __( "Enable Or Deseable Nav", "stock" )
+				 ),
+			 array(
+				  "type" => "dropdown",
+				  "heading" => esc_html__( "Eneable Or Deseable Dots", "stock" ),
+				  "param_name" => "slidedots",
+				  "std" => __( "true", "stock" ),
+				  "value" =>array(
+					  "yes" => "true",
+					  "No" => "false",
+				   ),
+				  "description" => __( "Enable Or Deseable Dots", "stock" )
+				 ),
+			 array(
+				  "type" => "dropdown",
+				  "heading" => esc_html__( " Enable Or Deseable Hover Poused", "stock" ),
+				  "param_name" => "hoverpused",
+				  "std" => __( "true", "stock" ),
+				  "value" =>array(
+					  "yes" => "true",
+					  "No" => "false",
+				   ),
+				  "description" => __( "Enable Or Deseable Slide Poused By Hovering", "stock" )
+				 ),
+			 
+        )
+    ) 
+);
+
+
+
+
+===================================================
+Shortcode
+===================================================
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {	exit; };
+
+
+function main_slide_shortcode($atts){
+    extract( shortcode_atts( array(
+        'slideitems' => '1',
+        'slideloop' => 'true',
+        'slideautoplay' => 'true',
+        'slidespeed' => '500',
+        'slidenave ' => 'true',
+        'slidedots' => 'true',
+        'hoverpused' => 'true',
+    ), $atts) );
+     
+    $q = new WP_Query(
+		array('posts_per_page' => $count, 'post_type' => 'main_slide')
+        );      
+         
+    $list ='
+	      <script>
+		  jQuery(window).load(function($){
+			 $(".slide-area").owlCarousel({
+            items:'.$slideitems.',
+            loop: '.$slideloop.',
+            autoPlay :'.$slideautoplay.',
+            smartSpeed: '.$slidespeed.',
+            nav: '.$slidenave.',
+            dots: '.$slidedots.',
+            autoplayHoverPause:'.$hoverpused.',
+          }); 
+		  });		  
+		</script>
+	<section class="main-slider-area" id="main-slide"><div class="slide-area owl-carousel">';
+    while($q->have_posts()) : $q->the_post();
+        $idd = get_the_ID();
+        $slide_meta = get_post_meta($idd, '_main_slide_custom__options', true);
+        $post_content = get_the_content();
+		
+		   $list.='<div class="single-slide" style="background-image:url('.get_the_post_thumbnail_url($idd ,'large').');">';
+			   
+			   foreach($slide_meta['buttons'] as $buttons){
+				   if($buttons['overlay'] == true){
+					  $list.='<div class="carousel-overlay" style="background:'.$buttons['slide_color'].'; opacity:'.$buttons['slide_opacity'].';"></div>'; 
+				   }	
+			    }
+			   
+				  $list.='<div class="table">
+					<div class="table-cell">
+						<div class="container">
+							<div class="row">
+								<div class="col-md-12">
+								   <div class="main-slide-content">
+									   <h1>'.get_the_title($idd).'</h1>
+									   <p>'.$post_content.'</p>';
+									   
+									    if(!empty($slide_meta['buttons'])){
+										   foreach($slide_meta['buttons'] as $buttons){
+											  if($buttons['link_type'] == 1){
+												  $btn_link= $buttons['extarnal'];
+											  }else{
+												$btn_link= get_page_link($buttons['page_list']);  
+											  }
+										   }
+											$list.='<a href="'.$btn_link.'" class="bordered-button">'.$buttons['link_text'].'</a>';
+										}
+										
+								  $list.=' </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				  </div>
+			   </div>';
+
+
+    endwhile;
+    $list.= ' </div></section>';
+    wp_reset_query();
+    return $list;
+}
+add_shortcode('main_slide', 'main_slide_shortcode');  
